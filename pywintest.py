@@ -1,10 +1,9 @@
-import numpy as np
 import cv2
 from scipy.misc import imresize
+import numpy as np
+from grabscreen import grab_screen
 import time
-import d3dshot
 from keras.models import load_model
-
 
 # Class to average lanes with
 class Lanes():
@@ -19,7 +18,7 @@ def road_lines(image):
     recreates an RGB image of a lane and merges with the
     original road image.
     """
-    print(image.shape)
+    #print(image.shape)
     # Get image ready for feeding into model
     small_img = imresize(image, (80, 160, 3))
     small_img = np.array(small_img)
@@ -42,7 +41,7 @@ def road_lines(image):
     lane_drawn = np.dstack((blanks, lanes.avg_fit, blanks))
 
     # Re-size to match the original image
-    lane_image = imresize(lane_drawn, (560, 1000, 3))
+    lane_image = imresize(lane_drawn, (561, 1001, 3))
 
     # Merge the lane drawing onto the original image
     result = cv2.addWeighted(image, 1, lane_image, 1, 0)
@@ -55,21 +54,18 @@ if __name__ == '__main__':
     model = load_model('full_CNN_model.h5')
     # Create lanes object
     lanes = Lanes()
-
-    while True:
+    while (True):
         last_time = time.time()
-
-        d = d3dshot.create(capture_output="numpy")
-        
-        # (left, top, right, bottom)  # values represent pixels
-        screen = d.screenshot(region=(0, 40, 1000, 600))  # BGR
-        capture = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB) # RGB
+        screen = grab_screen(region=(0, 40, 1000, 600))
+        capture = cv2.cvtColor(screen, cv2.COLOR_BGRA2RGB)
 
         output = road_lines(capture)
 
         cv2.imshow('Output', output)
 
+        #cv2.imshow('window', screen)
         print("fps: {}".format(1 / (time.time() - last_time)))
+
         if cv2.waitKey(25) & 0xFF == ord("q"):
             cv2.destroyAllWindows()
             break
